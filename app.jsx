@@ -1,3 +1,6 @@
+/*var React = require('react');
+var ReactDOM = require('react-dom');
+*/
 var ProductAdministrationComponent = React.createClass( {
     getInitialState: function() {
         return {
@@ -60,20 +63,7 @@ var ProductAdministrationComponent = React.createClass( {
     }
 });
 
-var HomePageComponent = function(props) {
-    var goProducts = function(e) {
-      props.router.push("/products");
-    }
-    var goAdmin = function(e) {
-        props.router.push("/admin/products/new");
-    }
-    return (
-      <div>
-        <button onClick={goProducts}>Go to Products</button>
-        <button onClick={goAdmin}>Go to Admin</button>
-      </div>
-    );
-  };
+
 
 var styles = {
         thumbnail: {
@@ -87,16 +77,17 @@ var styles = {
 }
 
 var ProductCardComponent = React.createClass( {
+
     render: function() {
         return (
-
                 <div className="col-sm-6 col-md-4">
                     <div className="thumbnail" style={styles.thumbnail}>
-                        <img src={this.props.image} alt="image" style={styles.image} />
+                <img src={this.props.image} alt="image" style={styles.image} />
                         <div className="caption">
                             <h3>{this.props.title}</h3>
-                            <p>${this.props.price}</p>
-                            <p><a href="#" className="btn btn-primary" role="button">Buy</a></p>
+                            <p>{this.props.artist}</p>
+                            <p>{this.props.year}</p>
+                            <p><a href={"https://www.discogs.com/release/" + this.props.item_id} className="btn btn-primary" role="button">Buy</a></p>
                         </div>
                     </div>
                 </div>
@@ -107,7 +98,8 @@ var ProductCardComponent = React.createClass( {
 ProductCardComponent.propTypes = {
     image: React.PropTypes.string.isRequired,
     title: React.PropTypes.string.isRequired,
-    price: React.PropTypes.number.isRequired,
+    year: React.PropTypes.number.isRequired,
+    item_id: React.PropTypes.number.isRequired
 };
 
 
@@ -116,9 +108,11 @@ var ProductListComponent = function( props ) {
         return (
             <ProductCardComponent
                 key={index}
-                image={product.image}
-                title={product.title}
-                price={product.price}
+                image='https://s.discogs.com/images/default-release.png'
+                title={product.basic_information.title}
+                artist={product.basic_information.artists[0].name}
+                year={product.basic_information.year}
+                item_id={product.id}
                 />
         );
     });
@@ -138,9 +132,9 @@ var ProductListContainer = React.createClass({
 
     componentWillMount: function() {
         var self = this;
-        axios.get('https://itakademija.herokuapp.com/api/products')
+        axios.get('https://api.discogs.com/users/mindzia/collection//folders/0/releases')
         .then(function (response) {
-            self.setState({ products: response.data });
+            self.setState({ products: response.data.releases });
         })
         .catch(function (error) {
           console.log(error);
@@ -157,17 +151,33 @@ ProductListComponent.propTypes = {
 
 
 var App = function(props) {
-    return <div>{props.children}</div>;
+    var goHome = function(e) {
+        props.router.push("/");
+    }
+    var goProducts = function(e) {
+        props.router.push("/products");
+      }
+      var goAdmin = function(e) {
+          props.router.push("/admin/products/new");
+      }
+    
+
+    return (
+            <div>
+            <nav className="navbar navbar-default">
+            <ul className="nav navbar-nav">
+            <li><a onClick={goHome}>Home </a></li>
+            <li><a onClick={goProducts}>Collection </a></li>
+            <li><a onClick={goAdmin}>Admin </a></li>
+            </ul>
+            </nav>
+            <div>{props.children}</div>
+            </div>);
 };
 
 var NoMatch = function(props) {
     return <div>Route did not match</div>;
 };
-  
-var ProductListPage = function() {
-    return <ProductListComponent products={myProducts} />
-} 
-
 
 var Router = window.ReactRouter.Router;
 var Route = window.ReactRouter.Route;
@@ -176,7 +186,7 @@ var IndexRoute = window.ReactRouter.IndexRoute;
 ReactDOM.render((
         <Router history={window.ReactRouter.hashHistory}>
             <Route path="/" component={App}>
-                <Route path="/home" component={HomePageComponent} />
+                
                 <Route path="/products" component={ProductListContainer} />
                 <Route path="/admin/products/new" component={ProductAdministrationComponent} />
                 <Route path="/admin/products/:id" component={ProductAdministrationComponent} />
